@@ -1,11 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
-from amz_spider_config import headers
-import ssl
+from config import headers, product_base_info
+import mongodb
+import ssl, time
+
 
 def get_info_from(detail_page_url):
 
-    web_data = requests.get(detail_page_url, headers=headers, timeout=60)
+    web_data = requests.get(detail_page_url, headers=headers, timeout=10)
     soup = BeautifulSoup(web_data.text, 'lxml')
 
     #通过selector定位到tag上
@@ -16,28 +18,42 @@ def get_info_from(detail_page_url):
     #存在促销和不促销，价格标签不一样
     if soup.select('#priceblock_saleprice').__len__() == 1:
         price = soup.select('#priceblock_saleprice')[0]
-    if soup.select('#priceblock_ourprice').__len__() == 1:
+    elif soup.select('#priceblock_ourprice').__len__() == 1:
         price = soup.select('#priceblock_ourprice')[0]
     else: price = None  # 没有购物车，没有价格
-
+    # print(price)
     buybox_exist = soup.select('#add-to-cart-button')
     feature = soup.select('#feature-bullets > ul > li').__len__() - 1  # 出现6条feature
-    print(feature)
+    # print(feature) # 有的feature会有6个li
     description = soup.select('#productDescription_feature_div')[0].get_text().__len__()
 
     data = {
+        'date': time.strftime('%x'),
         'asin': asin.get('data-asin'),
-        'review_quantity': review_quantity.get_text().replace('customer reviews',''),
+        'review_quantity': review_quantity.get_text().replace(' customer review','').replace('s',''),
         'score': score.get_text('', strip=True)[:3],
         'price': price.get_text()[1:] if price!=None else None,
         'buybox_exist': 'Normal' if buybox_exist else 'Abnormal',
-        'feature': 'Normal' if feature>=1 and feature<=5 else 'Abnormal',
+        'feature': 'Normal' if feature>=1 and feature<=7 else 'Abnormal',
         'description': 'Normal' if description >100 else 'Abnormal'
     }
     print(data)
+    db_product_info = mongodb.product_info.insert_one(data)
+
+
+def build_url_from_asin():
+    # 通过Asin生成产品页URL
+    mongodb.product_page_url.remove({})  # 先清空
+    for i in product_base_info:
+        # print(i['model_name'])
+        asin_url = 'https://www.amazon.com//dp/{}/'.format(i['asin'])
+        data = {
+            'model_name': i['model_name'],
+            'asin_url': asin_url
+        }
+        print(data)
+        mongodb.product_page_url.insert_one(data)
 
 
 if __name__ == '__main__':
-
-    detail_page_url = 'https://www.amazon.com/Enviro-Log-0-65-Fire-Wood-Bundle/dp/B019P4Z740/'
-    get_info_from(detail_page_url)
+    build_url_from_asin()

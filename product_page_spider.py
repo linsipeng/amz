@@ -6,7 +6,7 @@ import ssl, time
 
 
 def get_info_from(detail_page_url):
-
+    time.sleep(2)  # 2秒间隔，防止速度过快
     web_data = requests.get(detail_page_url, headers=headers, timeout=10)
     soup = BeautifulSoup(web_data.text, 'lxml')
 
@@ -38,10 +38,18 @@ def get_info_from(detail_page_url):
         'description': 'Normal' if description >100 else 'Abnormal'
     }
     print(data)
-    db_product_info = mongodb.product_info.insert_one(data)
+    data_filter = {
+        'date': time.strftime('%x'),
+        'asin': asin.get('data-asin')
+    }
+    # 防止相同日期的数据被重复采集
+    if mongodb.product_info.find(data_filter).count() == 0:  # 如果没有重复数据
+        mongodb.product_info.insert_one(data)  # 那就写入数据库
+    else:
+        pass
 
 
-def build_url_from_asin():
+def build_product_page_url():
     # 通过Asin生成产品页URL
     mongodb.product_page_url.remove({})  # 先清空
     for i in product_base_info:
@@ -51,9 +59,9 @@ def build_url_from_asin():
             'model_name': i['model_name'],
             'asin_url': asin_url
         }
-        print(data)
+        # print(data)
         mongodb.product_page_url.insert_one(data)
 
 
 if __name__ == '__main__':
-    build_url_from_asin()
+    build_product_page_url()

@@ -10,6 +10,8 @@ headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,imag
     }
 
 
+
+#商品Asin、对应的关键词等信息配置
 product_base_info = [
     # 壁炉风扇
     {
@@ -34,6 +36,12 @@ product_base_info = [
     {
         'model_name': 'Desiccant packs 5g',
         'asin': 'B01M7V19JE',
+        'keywords': ['desiccant', 'desiccant packets', 'desiccant packs']
+    },
+
+      {
+        'model_name': 'Desiccant packs 10g',
+        'asin': 'B01MPYB16J',
         'keywords': ['desiccant', 'desiccant packets', 'desiccant packs']
     },
 

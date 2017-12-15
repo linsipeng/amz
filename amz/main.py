@@ -1,6 +1,5 @@
 # coding:utf-8
-
-import spider_listing, spider_search_list, spider_price, database, url_builder, base_info
+from . import spider_listing, spider_search_list, spider_price, database, url_builder, base_info
 from multiprocessing import Pool
 
 

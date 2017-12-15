@@ -1,7 +1,6 @@
 # coding: utf-8
+from . import base_info, database
 
-import base_info
-import database
 
 
 def make_listing_url():
